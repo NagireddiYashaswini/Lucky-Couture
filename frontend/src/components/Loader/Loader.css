@@ -1,0 +1,72 @@
+.page-loader {
+  position: fixed;
+  inset: 0;
+  z-index: 3000;
+  background: var(--color-bg);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+}
+
+.page-loader__spinner {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: 3px solid var(--color-border);
+  border-top-color: var(--color-accent);
+  animation: spin 0.9s linear infinite;
+}
+
+.page-loader span {
+  font-family: var(--font-heading);
+  color: var(--color-primary);
+  font-size: 1.1rem;
+  letter-spacing: 0.04em;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.skeleton {
+  background: linear-gradient(90deg, #ece7e0 25%, #f4f1eb 37%, #ece7e0 63%);
+  background-size: 400% 100%;
+  animation: shimmer 1.4s ease infinite;
+}
+
+.skeleton--line {
+  height: 16px;
+  border-radius: 6px;
+  margin-top: 14px;
+  width: 80%;
+}
+
+.skeleton--short {
+  width: 45%;
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0 50%;
+  }
+}
+
+.skeleton-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 26px;
+}
+
+.skeleton-card {
+  background: var(--color-white);
+  border-radius: var(--radius-card);
+  padding: 16px;
+  box-shadow: var(--shadow-soft);
+}
