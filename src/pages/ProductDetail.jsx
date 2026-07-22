@@ -1,0 +1,200 @@
+import { useState } from "react";
+import { useParams, useNavigate, Link } from "react-router-dom";
+import { motion } from "framer-motion";
+import { Heart, Star, ShoppingBag, Zap, ChevronLeft } from "lucide-react";
+import { products, productViews, getReviews } from "../data/mockData";
+import { useApp } from "../context/AppContext";
+
+export default function ProductDetail() {
+  const { id } = useParams();
+  const navigate = useNavigate();
+  const { addToCart, toggleWishlist, isWishlisted } = useApp();
+
+  const product = products.find((p) => p.id === id);
+  const [activeView, setActiveView] = useState(0);
+
+  if (!product) {
+    return (
+      <div className="max-w-xl mx-auto px-5 py-24 text-center">
+        <h1 className="font-display text-2xl font-semibold text-primary mb-3">Product not found</h1>
+        <Link to="/shop" className="text-accent font-medium hover:underline">Back to Shop</Link>
+      </div>
+    );
+  }
+
+  const views = productViews(product);
+  const reviews = getReviews(product.id);
+  const avgRating =
+    Math.round((reviews.reduce((s, r) => s + r.rating, 0) / reviews.length) * 10) / 10;
+  const wishlisted = isWishlisted(product.id);
+  const discount = Math.round(100 - (product.price / product.mrp) * 100);
+
+  const ratingBuckets = [5, 4, 3, 2, 1].map((star) => ({
+    star,
+    count: reviews.filter((r) => Math.round(r.rating) === star).length,
+  }));
+
+  return (
+    <div className="max-w-6xl mx-auto px-5 md:px-8 py-12 md:py-16">
+      <button
+        onClick={() => navigate(-1)}
+        className="flex items-center gap-1.5 text-sm text-primary/70 hover:text-primary mb-8"
+      >
+        <ChevronLeft size={16} /> Back to shop
+      </button>
+
+      <div className="grid lg:grid-cols-2 gap-10 lg:gap-14 mb-16">
+        {/* Image gallery */}
+        <div>
+          <div className="rounded-2xl overflow-hidden bg-white shadow-card mb-4 aspect-[4/5]">
+            <motion.img
+              key={activeView}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.3 }}
+              src={views[activeView].image}
+              alt={`${product.name} — ${views[activeView].label} view`}
+              className="w-full h-full object-cover"
+            />
+          </div>
+          <div className="grid grid-cols-4 gap-3">
+            {views.map((v, i) => (
+              <button
+                key={v.label}
+                onClick={() => setActiveView(i)}
+                className={`rounded-xl overflow-hidden aspect-[4/5] border-2 transition-colors ${
+                  activeView === i ? "border-accent" : "border-transparent hover:border-primary/20"
+                }`}
+              >
+                <img src={v.image} alt={v.label} loading="lazy" className="w-full h-full object-cover" />
+              </button>
+            ))}
+          </div>
+          <div className="flex gap-2 mt-2 justify-center">
+            {views.map((v, i) => (
+              <span key={v.label} className={`text-[11px] ${activeView === i ? "text-accent font-medium" : "text-ink/40"}`}>
+                {v.label}
+              </span>
+            ))}
+          </div>
+        </div>
+
+        {/* Details */}
+        <div>
+          <div className="flex items-center gap-2 mb-2">
+            {product.bestseller && (
+              <span className="bg-highlight text-primary text-[10px] font-semibold tracking-wider uppercase px-2.5 py-1 rounded-full">Bestseller</span>
+            )}
+            {product.recent && (
+              <span className="bg-accent text-white text-[10px] font-semibold tracking-wider uppercase px-2.5 py-1 rounded-full">New</span>
+            )}
+          </div>
+          <span className="text-[11px] uppercase tracking-wider text-secondary">{product.category}</span>
+          <h1 className="font-display text-3xl font-semibold text-primary mt-1 mb-3">{product.name}</h1>
+
+          <div className="flex items-center gap-2 mb-5">
+            <div className="flex items-center gap-0.5">
+              {Array.from({ length: 5 }).map((_, i) => (
+                <Star key={i} size={15} className={i < Math.round(avgRating) ? "text-accent fill-accent" : "text-primary/15"} />
+              ))}
+            </div>
+            <span className="text-sm text-ink/60">{avgRating} · {reviews.length} reviews</span>
+          </div>
+
+          <div className="flex items-baseline gap-3 mb-6">
+            <span className="font-display text-3xl font-semibold text-primary">₹{product.price.toLocaleString("en-IN")}</span>
+            <span className="text-base text-ink/40 line-through">₹{product.mrp.toLocaleString("en-IN")}</span>
+            <span className="text-sm text-green-700 font-medium">{discount}% off</span>
+          </div>
+
+          <p className="text-sm text-ink/65 leading-relaxed mb-8 max-w-md">
+            Hand-finished {product.category.toLowerCase()} piece from our ready-to-wear collection —
+            same tailoring detail and quality checks as our custom stitching line.
+          </p>
+
+          <div className="flex flex-wrap gap-3">
+            <button
+              onClick={() => addToCart(product)}
+              className="flex-1 min-w-[160px] flex items-center justify-center gap-2 bg-primary text-bg font-medium py-3.5 rounded-full hover:bg-primary/90 transition-colors"
+            >
+              <ShoppingBag size={16} /> Add to Cart
+            </button>
+            <button
+              onClick={() => {
+                addToCart(product);
+                navigate("/cart");
+              }}
+              className="flex-1 min-w-[160px] flex items-center justify-center gap-2 bg-highlight text-primary font-semibold py-3.5 rounded-full hover:bg-accent hover:text-white transition-colors"
+            >
+              <Zap size={16} /> Buy Now
+            </button>
+            <button
+              onClick={() => toggleWishlist(product)}
+              aria-label="Toggle favourite"
+              className={`w-12 h-12 rounded-full flex items-center justify-center border transition-colors ${
+                wishlisted ? "bg-accent text-white border-accent" : "border-primary/15 text-primary hover:border-accent"
+              }`}
+            >
+              <Heart size={17} fill={wishlisted ? "currentColor" : "none"} />
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Reviews & Ratings — Amazon-style */}
+      <div className="border-t border-primary/10 pt-12">
+        <h2 className="font-display text-2xl font-semibold text-primary mb-8">Customer Reviews &amp; Ratings</h2>
+        <div className="grid md:grid-cols-[280px_1fr] gap-10">
+          <div>
+            <div className="flex items-baseline gap-2 mb-2">
+              <span className="font-display text-4xl font-bold text-primary">{avgRating}</span>
+              <span className="text-ink/50 text-sm">out of 5</span>
+            </div>
+            <div className="flex items-center gap-0.5 mb-1">
+              {Array.from({ length: 5 }).map((_, i) => (
+                <Star key={i} size={16} className={i < Math.round(avgRating) ? "text-accent fill-accent" : "text-primary/15"} />
+              ))}
+            </div>
+            <p className="text-sm text-ink/50 mb-6">{reviews.length} global ratings</p>
+            <div className="flex flex-col gap-1.5">
+              {ratingBuckets.map((b) => (
+                <div key={b.star} className="flex items-center gap-2 text-xs text-ink/60">
+                  <span className="w-10">{b.star} star</span>
+                  <div className="flex-1 h-2 bg-primary/10 rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-accent rounded-full"
+                      style={{ width: `${(b.count / reviews.length) * 100}%` }}
+                    />
+                  </div>
+                  <span className="w-5 text-right">{b.count}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="flex flex-col gap-6">
+            {reviews.map((r) => (
+              <div key={r.id} className="border-b border-primary/10 pb-6 last:border-none">
+                <div className="flex items-center gap-3 mb-1.5">
+                  <span className="w-8 h-8 rounded-full bg-primary text-highlight flex items-center justify-center text-xs font-semibold">
+                    {r.name[0]}
+                  </span>
+                  <div>
+                    <p className="text-sm font-medium text-primary">{r.name}</p>
+                    <div className="flex items-center gap-0.5">
+                      {Array.from({ length: 5 }).map((_, i) => (
+                        <Star key={i} size={11} className={i < r.rating ? "text-accent fill-accent" : "text-primary/15"} />
+                      ))}
+                    </div>
+                  </div>
+                  <span className="text-xs text-ink/40 ml-auto">{r.date}</span>
+                </div>
+                <p className="text-sm text-ink/70 leading-relaxed">{r.comment}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
